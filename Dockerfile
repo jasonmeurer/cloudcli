@@ -8,12 +8,12 @@ ENV ANSIBLE_HOST_KEY_CHECKING false
 ENV ANSIBLE_RETRY_FILES_ENABLED false
 ENV ANSIBLE_ROLES_PATH /ansible/playbooks/roles
 ENV ANSIBLE_SSH_PIPELINING True
-ENV PYTHONPATH /ansible/lib
 ENV ANSIBLE_LIBRARY /ansible/library
 
 RUN \
   apt-get update && \
-  apt-get install -y python python-dev python-pip python-virtualenv curl git unzip wget lsb-release apt-transport-https nano && \
+  apt-get install -y python python-dev python-pip python-virtualenv curl git unzip wget lsb-release apt-transport-https nano apt-utils && \
+  pip install Flask && \
   echo "...INSTALLING ANSIBLE..." && \
   pip install ansible==${ANSIBLE_VERSION} && \
   echo "...INSTALLING AWS..." && \
@@ -29,13 +29,20 @@ RUN \
   cd /tmp && \
   wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
   unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin && \
+  echo "...INSTALLING Cisco ACI..." && \
+  wget https://github.com/datacenter/acitoolkit/archive/master.zip && \
+  unzip master.zip -d /usr/bin && \
+  cd /usr/bin/acitoolkit-master/ && \
+  python /usr/bin/acitoolkit-master/setup.py install && \
   echo "...CLEAN UP..." && \
-  rm -rf terraform_0.11.8_linux_amd64.zip && \
+  cd /tmp && \
+  rm -rf *.zip && \
   rm -rf /tmp/* && \
   rm -rf /var/tmp/* \
   rm -rf /var/lib/apt/lists/*
 
-ENV PATH="~/.local/bin:/root/google-cloud-sdk/bin:/ansible/bin:${PATH}"
+ENV PATH="~/.local/bin:/root/google-cloud-sdk/bin:/ansible/bin:/usr/bin/acitoolkit-master/acitoolkit:${PATH}"
+ENV PYTHONPATH="/ansible/lib:/usr/bin/acitoolkit-master/:/usr/bin/acitoolkit-master/acitoolkit:${PYTHONPATH}"
 
 WORKDIR /var/cloudcli
 
